@@ -1,0 +1,154 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# Dependencies
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.log*
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native builds
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.cer
+*.certSigningRequest
+
+# Metro
+.metro-health-check*
+.metro-cache/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+
+# Generated native folders (EAS Build)
+/ios
+/android
+
+# EAS
+.easignore
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Bundle artifacts
+*.jsbundle
+
+# CocoaPods
+ios/Pods/
+ios/*.xcworkspace
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+android/app/release/
+android/app/debug/
+android/gradle/
+android/.idea/
+
+# Flipper
+ios/Flipper-Folly
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+*.pem
+
+# Windows
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Watchman
+.watchmanconfig
+
+# React Native
+react-native/
+.react-native/
+
+# Xcode
+ios/build/
+ios/DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Android Studio
+.gradle/
+build/
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Android
+*.apk
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+
+# Keystore files
+*.keystore
+
+# Google Services (Firebase)
+google-services.json
+GoogleService-Info.plist
+
+# Auth tokens (if stored locally for development)
+.auth-token
+
+# Testing
+coverage/
+.nyc_output/
