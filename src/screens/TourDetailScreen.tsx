@@ -12,6 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useAppStore } from '../store/appStore';
+import { Colors } from '../config/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -36,7 +37,7 @@ export default function TourDetailScreen({ route, navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Loading tour details...</Text>
         </View>
       </SafeAreaView>
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: Colors.primary,
     marginRight: 8,
   },
   priceLabel: {
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryTag: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.primary,
     color: 'white',
     fontSize: 12,
     paddingHorizontal: 12,
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
   },
   highlightBullet: {
     fontSize: 16,
-    color: '#007AFF',
+    color: Colors.primary,
     marginRight: 12,
     marginTop: 2,
   },
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
   bottomPrice: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: Colors.primary,
     marginRight: 8,
   },
   bottomPriceLabel: {
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   bookButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,

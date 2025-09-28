@@ -53,8 +53,6 @@ export default function ExploreScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Explore Tours</Text>
-
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <TextInput
@@ -166,6 +164,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     marginBottom: 15,
+    marginTop: 8,
   },
   searchInput: {
     backgroundColor: '#f0f0f0',

@@ -157,8 +157,6 @@ export default function ToursScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Discover Tours</Text>
-
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <TextInput
@@ -231,6 +229,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     marginBottom: 16,
+    marginTop: 8,
   },
   searchInput: {
     height: 40,

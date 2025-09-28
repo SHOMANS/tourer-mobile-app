@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
+import { Colors } from '../config/colors';
 
 export default function MainScreen({ navigation }: any) {
   const {
@@ -162,10 +163,10 @@ export default function MainScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.background.secondary,
   },
   header: {
-    backgroundColor: '#0066CC',
+    backgroundColor: Colors.primary,
     padding: 20,
     paddingTop: 60,
   },
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
     color: '#dc3545',
   },
   refreshButton: {
-    backgroundColor: '#0066CC',
+    backgroundColor: Colors.primary,
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   actionButton: {
-    backgroundColor: '#0066CC',
+    backgroundColor: Colors.primary,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   seeAllText: {
-    color: '#2196F3',
+    color: Colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
   tourPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: Colors.primary,
   },
   tourRating: {
     fontSize: 12,

@@ -13,6 +13,7 @@ import {
 // TODO: Uncomment when Google OAuth is fully configured
 // import * as WebBrowser from 'expo-web-browser';
 import { useAppStore } from '../store/appStore';
+import { Colors } from '../config/colors';
 
 // TODO: Uncomment when Google OAuth is fully configured
 // WebBrowser.maybeCompleteAuthSession();
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   button: {
-    backgroundColor: '#0066CC',
+    backgroundColor: Colors.primary,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontSize: 16,
-    color: '#0066CC',
+    color: Colors.primary,
     fontWeight: '600',
   },
   dividerContainer: {

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
+import { Colors } from '../config/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -373,7 +374,7 @@ const styles = StyleSheet.create({
   browseAllButton: {
     paddingHorizontal: 15,
     paddingVertical: 8,
-    backgroundColor: '#0066CC',
+    backgroundColor: Colors.primary,
     borderRadius: 20,
   },
   browseAllText: {
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
   packagePrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0066CC',
+    color: Colors.primary,
     paddingHorizontal: 12,
     paddingBottom: 12,
   },

@@ -65,7 +65,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
     // Auto finish after 6 seconds
     const autoFinishTimer = setTimeout(() => {
       onFinish();
-    }, 6000);
+    }, 3000);
 
     return () => {
       clearTimeout(skipTimer);

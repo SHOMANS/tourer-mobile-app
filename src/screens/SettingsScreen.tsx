@@ -37,8 +37,6 @@ export default function SettingsScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Settings</Text>
-
         {/* User Info Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
@@ -108,6 +106,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 30,
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 18,

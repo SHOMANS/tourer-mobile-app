@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useAppStore } from '../store/appStore';
+import { Colors } from '../config/colors';
 
 export default function HealthScreen() {
   const { healthData, loading, error, fetchHealthStatus } = useAppStore();
@@ -23,7 +24,7 @@ export default function HealthScreen() {
         </Text>
       </TouchableOpacity>
 
-      {loading && <ActivityIndicator size="large" color="#0066CC" style={styles.loader} />}
+      {loading && <ActivityIndicator size="large" color={Colors.primary} style={styles.loader} />}
 
       {error && (
         <View style={styles.errorContainer}>
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   button: {
-    backgroundColor: '#0066CC',
+    backgroundColor: Colors.primary,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',

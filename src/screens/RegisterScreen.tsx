@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useAppStore } from '../store/appStore';
+import { Colors } from '../config/colors';
 
 export default function RegisterScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState('');
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   button: {
-    backgroundColor: '#0066CC',
+    backgroundColor: Colors.primary,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     fontSize: 16,
-    color: '#0066CC',
+    color: Colors.primary,
     fontWeight: '600',
   },
 });
