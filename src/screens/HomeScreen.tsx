@@ -116,8 +116,8 @@ export default function MainScreen({ navigation }: any) {
     navigation.navigate('Tours');
   };
 
-  const navigateToTourDetail = (tourId: string) => {
-    navigation.navigate('TourDetail', { tourId });
+  const navigateToTourDetail = (packageId: string) => {
+    navigation.navigate('TourDetail', { packageId });
   };
 
   if (loading && !healthData) {

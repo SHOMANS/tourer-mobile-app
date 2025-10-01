@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { useAppStore } from '../store/appStore';
 
@@ -34,57 +35,77 @@ export default function SettingsScreen({ navigation }: any) {
     navigation.navigate('Profile');
   };
 
+  const navigateToBookings = () => {
+    navigation.navigate('MyBookings');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* User Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.userInfoCard}>
-            <Text style={styles.userEmail}>{user?.email}</Text>
-            <Text style={styles.userName}>
-              {user?.firstName} {user?.lastName}
-            </Text>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          {/* User Info Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account</Text>
+            <View style={styles.userInfoCard}>
+              <Text style={styles.userEmail}>{user?.email}</Text>
+              <Text style={styles.userName}>
+                {user?.firstName} {user?.lastName}
+              </Text>
+            </View>
+          </View>
+
+          {/* Settings Options */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>My Account</Text>
+
+            <TouchableOpacity style={styles.settingItem} onPress={navigateToBookings}>
+              <Text style={styles.settingText}>My Bookings</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.settingItem} onPress={navigateToProfile}>
+              <Text style={styles.settingText}>Edit Profile</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Settings Options */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Preferences</Text>
+
+            <TouchableOpacity style={styles.settingItem}>
+              <Text style={styles.settingText}>Notifications</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.settingItem}>
+              <Text style={styles.settingText}>Privacy Policy</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.settingItem}>
+              <Text style={styles.settingText}>Terms of Service</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.settingItem}>
+              <Text style={styles.settingText}>About</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Logout Section */}
+          <View style={styles.section}>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        {/* Settings Options */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-
-          <TouchableOpacity style={styles.settingItem} onPress={navigateToProfile}>
-            <Text style={styles.settingText}>Edit Profile</Text>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingText}>Notifications</Text>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingText}>Privacy Policy</Text>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingText}>Terms of Service</Text>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingText}>About</Text>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Logout Section */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -94,8 +115,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
     padding: 20,
   },
   title: {

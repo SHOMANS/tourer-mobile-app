@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, AppState } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from './src/config/colors';
 
@@ -16,6 +16,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import HealthScreen from './src/screens/HealthScreen';
 import ToursScreen from './src/screens/ToursScreen';
 import TourDetailScreen from './src/screens/TourDetailScreen';
+import BookingScreen from './src/screens/BookingScreen';
+import MyBookingsScreen from './src/screens/MyBookingsScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SplashScreen from './src/screens/SplashScreen';
@@ -111,6 +113,16 @@ function MainStack() {
         options={{ title: 'Tour Details' }}
       />
       <Stack.Screen
+        name="BookingScreen"
+        component={BookingScreen}
+        options={{ title: 'Book Tour' }}
+      />
+      <Stack.Screen
+        name="MyBookings"
+        component={MyBookingsScreen}
+        options={{ title: 'My Bookings' }}
+      />
+      <Stack.Screen
         name="Profile"
         component={HealthScreen}
         options={{ title: 'Profile' }}
@@ -120,7 +132,7 @@ function MainStack() {
 }
 
 export default function App() {
-  const { user, loadStoredAuth } = useAppStore();
+  const { user, loadStoredAuth, logout, verifyAuthentication } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
@@ -137,6 +149,30 @@ export default function App() {
 
     initializeAuth();
   }, [loadStoredAuth]);
+
+  // Add app state listener to check authentication when app comes to foreground
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: string) => {
+      if (nextAppState === 'active' && user) {
+        // App came to foreground and user is logged in
+        try {
+          const isAuthenticated = await verifyAuthentication();
+          if (!isAuthenticated) {
+            console.log('Authentication verification failed, user logged out');
+          }
+        } catch (error) {
+          console.log('Authentication verification error:', error);
+        }
+      }
+    };
+
+    // Listen for app state changes
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [user, verifyAuthentication]);
 
   const handleSplashFinish = () => {
     setShowSplash(false);

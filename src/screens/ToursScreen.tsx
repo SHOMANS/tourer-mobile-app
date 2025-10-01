@@ -23,7 +23,7 @@ interface TourPackage {
   duration: number;
   difficulty: string;
   category: string;
-  location: string;
+  locationName: string;
   country?: string;
   coverImage?: string;
   rating?: number;
@@ -35,9 +35,11 @@ export default function ToursScreen({ navigation }: any) {
     packages,
     categories,
     packagesLoading,
+    loadingMore,
     packagesError,
     pagination,
     fetchPackages,
+    loadMorePackages,
     fetchCategories,
     searchPackages,
   } = useAppStore();
@@ -46,7 +48,7 @@ export default function ToursScreen({ navigation }: any) {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   useEffect(() => {
-    fetchPackages();
+    fetchPackages({ page: 1 });
     fetchCategories();
   }, []);
 
@@ -55,7 +57,7 @@ export default function ToursScreen({ navigation }: any) {
     if (query.length > 0) {
       searchPackages(query);
     } else {
-      fetchPackages({ category: selectedCategory || undefined });
+      fetchPackages({ category: selectedCategory || undefined, page: 1 });
     }
   };
 
@@ -64,12 +66,47 @@ export default function ToursScreen({ navigation }: any) {
     setSelectedCategory(newCategory);
     fetchPackages({
       category: newCategory || undefined,
-      search: searchQuery || undefined
+      search: searchQuery || undefined,
+      page: 1
     });
   };
 
   const handlePackagePress = (packageItem: TourPackage) => {
     navigation.navigate('TourDetail', { packageId: packageItem.id });
+  };
+
+  const handleLoadMore = () => {
+    if (pagination && pagination.page < pagination.pages && !loadingMore) {
+      loadMorePackages();
+    }
+  };
+
+  const renderFooter = () => {
+    if (!pagination || pagination.page >= pagination.pages) {
+      return (
+        <View style={styles.footerContainer}>
+          <Text style={styles.endText}>You've seen all tours! 🎉</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.footerContainer}>
+        <TouchableOpacity
+          style={[styles.loadMoreButton, loadingMore && styles.loadMoreButtonDisabled]}
+          onPress={handleLoadMore}
+          disabled={loadingMore}
+        >
+          {loadingMore ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text style={styles.loadMoreText}>
+              Load More Tours ({pagination.total - packages.length} remaining)
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
   };
 
   const renderPackageCard = ({ item }: { item: TourPackage }) => (
@@ -92,7 +129,7 @@ export default function ToursScreen({ navigation }: any) {
         </Text>
 
         <View style={styles.packageMeta}>
-          <Text style={styles.location}>📍 {item.location}</Text>
+          <Text style={styles.location}>📍 {item.locationName}</Text>
           <Text style={styles.duration}>⏱️ {item.duration} days</Text>
         </View>
 
@@ -145,7 +182,7 @@ export default function ToursScreen({ navigation }: any) {
           <Text style={styles.errorText}>Error: {packagesError}</Text>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={() => fetchPackages()}
+            onPress={() => fetchPackages({ page: 1 })}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
@@ -192,15 +229,28 @@ export default function ToursScreen({ navigation }: any) {
           keyExtractor={(item) => item.id}
           style={styles.packagesList}
           contentContainerStyle={styles.packagesContent}
-          refreshing={packagesLoading}
-          onRefresh={() => fetchPackages()}
+          onRefresh={() => fetchPackages({
+            category: selectedCategory || undefined,
+            search: searchQuery || undefined,
+            page: 1
+          })}
+          refreshing={false}
+          ListFooterComponent={packages.length > 0 ? renderFooter : null}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+          }}
+          removeClippedSubviews={false}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+          windowSize={10}
         />
       )}
 
-      {pagination && (
+      {pagination && packages.length > 0 && (
         <View style={styles.paginationInfo}>
           <Text style={styles.paginationText}>
-            Showing {packages.length} of {pagination.total} tours
+            Showing {packages.length} of {pagination.total} tours • Page {pagination.page} of {pagination.pages}
           </Text>
         </View>
       )}
@@ -428,5 +478,31 @@ const styles = StyleSheet.create({
   paginationText: {
     fontSize: 14,
     color: '#666',
+  },
+  footerContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadMoreButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  loadMoreButtonDisabled: {
+    backgroundColor: '#99c9ff',
+  },
+  loadMoreText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  endText: {
+    fontSize: 16,
+    color: '#666',
+    fontStyle: 'italic',
   },
 });

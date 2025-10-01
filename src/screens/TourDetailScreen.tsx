@@ -10,7 +10,16 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
+  Linking,
+  Platform,
+  Share,
+  Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useAppStore } from '../store/appStore';
 import { Colors } from '../config/colors';
 
@@ -23,14 +32,40 @@ export default function TourDetailScreen({ route, navigation }: any) {
     packagesLoading,
     packagesError,
     fetchPackageById,
+    reviews,
+    reviewsLoading,
+    reviewsError,
+    reviewsPagination,
+    fetchReviews,
+    clearReviews,
+    accessToken,
+    user,
   } = useAppStore();
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
+  const [fullscreenImageUrl, setFullscreenImageUrl] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewImages, setReviewImages] = useState<string[]>([]);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // Helper function to check if current user has already reviewed this package
+  const hasUserReviewed = () => {
+    if (!user || !reviews.length) return false;
+    return reviews.some(review => review.userId === user.id);
+  };
 
   useEffect(() => {
     if (packageId) {
       fetchPackageById(packageId);
+      fetchReviews(packageId, 1, 5); // Fetch first 5 reviews
     }
+    return () => {
+      clearReviews(); // Clear reviews when leaving the screen
+    };
   }, [packageId]);
 
   if (packagesLoading) {
@@ -62,6 +97,171 @@ export default function TourDetailScreen({ route, navigation }: any) {
     );
   }
 
+  const handleSubmitReview = async () => {
+    if (!reviewComment.trim()) {
+      Alert.alert('Error', 'Please write a review comment');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+
+    const reviewData = {
+      packageId,
+      rating: reviewRating,
+      title: reviewTitle.trim() || undefined,
+      comment: reviewComment.trim(),
+      images: reviewImages,
+    };
+
+    try {
+      const { createReview, addOptimisticReview, user } = useAppStore.getState();
+
+      // Add optimistic review immediately for instant UI feedback
+      if (user) {
+        const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+        addOptimisticReview(reviewData, user.id, userName);
+      }
+
+      // Reset form and close modal immediately
+      setReviewComment('');
+      setReviewTitle('');
+      setReviewRating(5);
+      setReviewImages([]);
+      setShowReviewModal(false);
+
+      // Submit the review to backend
+      await createReview(reviewData);
+
+      // Add a small delay to ensure backend processing is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Refresh data to get the real review and updated counts
+      await Promise.all([
+        fetchReviews(packageId, 1, 5), // This will replace optimistic review with real one
+        fetchPackageById(packageId) // Update review count
+      ]);
+
+      Alert.alert('Success', 'Your review has been submitted successfully!');
+    } catch (error: any) {
+      console.error('Review submission error:', error);
+
+      // If submission failed, refresh to remove optimistic review
+      await Promise.all([
+        fetchReviews(packageId, 1, 5),
+        fetchPackageById(packageId)
+      ]);
+
+      // Extract meaningful error message
+      let errorMessage = 'Failed to submit review. Please try again.';
+
+      if (error.message) {
+        // Check for specific error types and provide user-friendly messages
+        if (error.message.includes('already reviewed this package')) {
+          errorMessage = 'You have already submitted a review for this tour. Each user can only review a tour once.';
+        } else if (error.message.includes('Authentication required')) {
+          errorMessage = 'Please log in to submit a review.';
+        } else if (error.message.includes('Package not found')) {
+          errorMessage = 'This tour is no longer available.';
+        } else {
+          // Use the backend error message if it's meaningful
+          errorMessage = error.message;
+        }
+      }
+
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleImagePress = (imageUrl: string) => {
+    setFullscreenImageUrl(imageUrl);
+    setShowFullscreenImage(true);
+  };
+
+  const pickImagesFromLibrary = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+        selectionLimit: 5 - reviewImages.length, // Limit to 5 total images
+      });
+
+      if (!result.canceled && result.assets) {
+        // Upload images to backend first
+        const uploadedImageUrls: string[] = [];
+
+        for (const asset of result.assets) {
+          // Here we would upload to the backend and get the URL
+          // For now, we'll use the local URI
+          uploadedImageUrls.push(asset.uri);
+        }
+
+        setReviewImages(prev => [...prev, ...uploadedImageUrls]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to select images');
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        // Upload image to backend first
+        const uploadedImageUrl = result.assets[0].uri; // For now, use local URI
+        setReviewImages(prev => [...prev, uploadedImageUrl]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
+
+  const removeReviewImage = (index: number) => {
+    setReviewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddImages = () => {
+    Alert.alert(
+      'Add Photos',
+      'Choose how you want to add photos to your review',
+      [
+        { text: 'Camera', onPress: takePhoto },
+        { text: 'Photo Library', onPress: pickImagesFromLibrary },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const renderStarRating = () => {
+    return (
+      <View style={styles.starRatingContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity
+            key={star}
+            onPress={() => setReviewRating(star)}
+            style={[
+              styles.starButton,
+              star <= reviewRating ? styles.starButtonSelected : styles.starButtonUnselected
+            ]}
+          >
+            <Text style={[
+              styles.starText,
+              star <= reviewRating ? styles.starTextSelected : styles.starTextUnselected
+            ]}>
+              ★
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
   const renderImageItem = ({ item, index }: { item: string; index: number }) => (
     <TouchableOpacity onPress={() => setSelectedImageIndex(index)}>
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
@@ -89,10 +289,55 @@ export default function TourDetailScreen({ route, navigation }: any) {
     </View>
   );
 
+  const renderReviewItem = ({ item }: { item: any }) => (
+    <View style={styles.reviewItem}>
+      <View style={styles.reviewHeader}>
+        <Text style={styles.reviewerName}>
+          {item.user.firstName} {item.user.lastName}
+        </Text>
+        <View style={styles.reviewRating}>
+          <Text style={styles.reviewStars}>
+            {'⭐'.repeat(item.rating)}
+          </Text>
+        </View>
+      </View>
+      {item.title && (
+        <Text style={styles.reviewTitle}>{item.title}</Text>
+      )}
+      {item.comment && (
+        <Text style={styles.reviewComment}>{item.comment}</Text>
+      )}
+      {item.images && item.images.length > 0 && (
+        <ScrollView
+          horizontal
+          style={styles.reviewImagesContainer}
+          showsHorizontalScrollIndicator={false}
+        >
+          {item.images.map((imageUrl: string, index: number) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => handleImagePress(imageUrl)}
+            >
+              <Image
+                source={{ uri: imageUrl }}
+                style={styles.reviewImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+      <Text style={styles.reviewDate}>
+        {new Date(item.createdAt).toLocaleDateString()}
+      </Text>
+      {item.isVerified && (
+        <Text style={styles.verifiedBadge}>✓ Verified Purchase</Text>
+      )}
+    </View>
+  );
+
   const handleBookNow = () => {
-    // TODO: Navigate to booking screen
-    console.log('Booking tour:', selectedPackage.id);
-    // navigation.navigate('BookingScreen', { packageId: selectedPackage.id });
+    navigation.navigate('BookingScreen', { packageId: selectedPackage.id });
   };
 
   return (
@@ -139,7 +384,7 @@ export default function TourDetailScreen({ route, navigation }: any) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>{selectedPackage.title}</Text>
               <Text style={styles.location}>
-                📍 {selectedPackage.location}
+                📍 {selectedPackage.locationName}
                 {selectedPackage.country && `, ${selectedPackage.country}`}
               </Text>
             </View>
@@ -241,6 +486,114 @@ export default function TourDetailScreen({ route, navigation }: any) {
               />
             </View>
           )}
+
+          {/* Location */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            <View style={styles.locationInfo}>
+              <Text style={styles.locationText}>📍 {selectedPackage.locationName}</Text>
+              {selectedPackage.country && (
+                <Text style={styles.countryText}>{selectedPackage.country}</Text>
+              )}
+            </View>
+            <TouchableOpacity
+              style={styles.mapButton}
+              onPress={() => {
+                const coords = selectedPackage.coordinates
+                  ? JSON.parse(selectedPackage.coordinates)
+                  : null;
+                if (coords) {
+                  const { lat, lng } = coords;
+                  const url = Platform.OS === 'ios'
+                    ? `http://maps.apple.com/?daddr=${lat},${lng}`
+                    : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                  Linking.openURL(url);
+                }
+              }}
+            >
+              <Text style={styles.mapButtonText}>📍 Open in Maps</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Reviews */}
+          <View style={styles.section}>
+            <View style={styles.reviewsHeader}>
+              <Text style={styles.sectionTitle}>
+                Reviews ({selectedPackage.reviewCount})
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.writeReviewButton,
+                  hasUserReviewed() && styles.writeReviewButtonDisabled
+                ]}
+                onPress={() => {
+                  if (!accessToken) {
+                    Alert.alert(
+                      'Login Required',
+                      'Please log in to write a review.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Login', onPress: () => navigation.navigate('Login') }
+                      ]
+                    );
+                    return;
+                  }
+
+                  // Check if user has already reviewed this package
+                  if (hasUserReviewed()) {
+                    Alert.alert(
+                      'Review Already Submitted',
+                      'You have already reviewed this tour. Each user can only submit one review per tour.',
+                      [{ text: 'OK', style: 'default' }]
+                    );
+                    return;
+                  }
+
+                  setShowReviewModal(true);
+                }}
+              >
+                <Text style={styles.writeReviewText}>
+                  {hasUserReviewed() ? 'Review Submitted' : 'Write Review'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {reviewsLoading ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : reviewsError ? (
+              <Text style={styles.errorText}>{reviewsError}</Text>
+            ) : reviews.length > 0 ? (
+              <FlatList
+                data={reviews}
+                renderItem={renderReviewItem}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                ItemSeparatorComponent={() => <View style={styles.reviewSeparator} />}
+              />
+            ) : (
+              <Text style={styles.noReviewsText}>No reviews yet. Be the first to review!</Text>
+            )}
+
+            {reviews.length > 0 && reviewsPagination && reviewsPagination.page < reviewsPagination.pages && (
+              <TouchableOpacity
+                style={styles.viewAllReviewsButton}
+                onPress={() => {
+                  if (reviewsPagination) {
+                    fetchReviews(packageId, reviewsPagination.page + 1, 5);
+                  }
+                }}
+                disabled={reviewsLoading}
+              >
+                {reviewsLoading ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Text style={styles.viewAllReviewsText}>
+                    Load More Reviews ({reviews.length} of {selectedPackage.reviewCount})
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </ScrollView>
 
@@ -255,6 +608,144 @@ export default function TourDetailScreen({ route, navigation }: any) {
           <Text style={styles.bookButtonText}>Book Now</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Write Review Modal */}
+      <Modal
+        visible={showReviewModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboardView}
+          >
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={() => setShowReviewModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Write a Review</Text>
+              <View style={styles.modalHeaderPlaceholder} />
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>Rating</Text>
+                {renderStarRating()}
+              </View>
+
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>Title (optional)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Give your review a title"
+                  value={reviewTitle}
+                  onChangeText={setReviewTitle}
+                  maxLength={100}
+                />
+              </View>
+
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>Review</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.modalTextArea]}
+                  placeholder="Share your experience with this tour..."
+                  value={reviewComment}
+                  onChangeText={setReviewComment}
+                  multiline
+                  numberOfLines={4}
+                  maxLength={1000}
+                />
+                <Text style={styles.characterCount}>
+                  {reviewComment.length}/1000 characters
+                </Text>
+              </View>
+
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>Photos (optional)</Text>
+                <TouchableOpacity
+                  style={styles.addPhotosButton}
+                  onPress={handleAddImages}
+                >
+                  <Ionicons name="camera" size={20} color="#666" />
+                  <Text style={styles.addPhotosText}>Add Photos ({reviewImages.length}/5)</Text>
+                </TouchableOpacity>
+
+                {reviewImages.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    style={styles.selectedImagesContainer}
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    {reviewImages.map((imageUri, index) => (
+                      <View key={index} style={styles.selectedImageWrapper}>
+                        <Image
+                          source={{ uri: imageUri }}
+                          style={styles.selectedImage}
+                        />
+                        <TouchableOpacity
+                          style={styles.removeImageButton}
+                          onPress={() => removeReviewImage(index)}
+                        >
+                          <Ionicons name="close-circle" size={20} color="#FF6B6B" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[
+                  styles.submitReviewButton,
+                  (!reviewComment.trim() || isSubmittingReview) && styles.submitReviewButtonDisabled
+                ]}
+                onPress={handleSubmitReview}
+                disabled={!reviewComment.trim() || isSubmittingReview}
+              >
+                {isSubmittingReview ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <Text style={styles.submitReviewButtonText}>Submit Review</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Fullscreen Image Modal */}
+      <Modal
+        visible={showFullscreenImage}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowFullscreenImage(false)}
+      >
+        <View style={styles.fullscreenImageContainer}>
+          <TouchableOpacity
+            style={styles.fullscreenImageCloseArea}
+            onPress={() => setShowFullscreenImage(false)}
+            activeOpacity={1}
+          >
+            <Image
+              source={{ uri: fullscreenImageUrl }}
+              style={styles.fullscreenImage}
+              resizeMode="contain"
+            />
+            <TouchableOpacity
+              style={styles.fullscreenImageCloseButton}
+              onPress={() => setShowFullscreenImage(false)}
+            >
+              <Ionicons name="close" size={30} color="white" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -556,5 +1047,295 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Location styles
+  locationInfo: {
+    marginBottom: 12,
+  },
+  locationText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  countryText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  mapButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  mapButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Review styles
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  writeReviewButton: {
+    backgroundColor: Colors.secondary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  writeReviewButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.7,
+  },
+  writeReviewText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reviewItem: {
+    backgroundColor: '#f9f9f9',
+    padding: 16,
+    borderRadius: 8,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  reviewRating: {
+    flexDirection: 'row',
+  },
+  reviewStars: {
+    fontSize: 14,
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 4,
+  },
+  verifiedBadge: {
+    fontSize: 12,
+    color: '#4CAF50',
+    fontWeight: '600',
+  },
+  reviewSeparator: {
+    height: 12,
+  },
+  noReviewsText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    padding: 20,
+  },
+  viewAllReviewsButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    alignItems: 'center',
+  },
+  viewAllReviewsText: {
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  modalKeyboardView: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  modalCloseButton: {
+    padding: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalHeaderPlaceholder: {
+    width: 40,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  modalSection: {
+    marginBottom: 24,
+  },
+  modalSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  starRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  starButton: {
+    padding: 4,
+    marginHorizontal: 2,
+  },
+  starButtonSelected: {
+    borderRadius: 8,
+    transform: [{ scale: 1.1 }],
+  },
+  starButtonUnselected: {
+    backgroundColor: 'transparent',
+  },
+  starText: {
+    fontSize: 32,
+  },
+  starTextSelected: {
+    color: '#FFD700',
+  },
+  starTextUnselected: {
+    color: '#DDD',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+  },
+  modalTextArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  modalFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+  },
+  submitReviewButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  submitReviewButtonDisabled: {
+    backgroundColor: '#CCC',
+  },
+  submitReviewButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Review image styles
+  reviewTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  reviewImagesContainer: {
+    marginVertical: 8,
+  },
+  reviewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  // Modal image picker styles
+  addPhotosButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    borderStyle: 'dashed',
+    marginVertical: 8,
+  },
+  addPhotosText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#666',
+  },
+  selectedImagesContainer: {
+    marginTop: 12,
+  },
+  selectedImageWrapper: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  selectedImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: 'white',
+    borderRadius: 10,
+  },
+  // Fullscreen image modal styles
+  fullscreenImageContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImageCloseArea: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+    width: width,
+    height: '80%',
+  },
+  fullscreenImageCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 8,
   },
 });

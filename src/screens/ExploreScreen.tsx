@@ -39,8 +39,8 @@ export default function ExploreScreen({ navigation }: any) {
     }
   };
 
-  const navigateToTourDetail = (tourId: string) => {
-    navigation.navigate('TourDetail', { tourId });
+  const navigateToTourDetail = (packageId: string) => {
+    navigation.navigate('TourDetail', { packageId });
   };
 
   const filteredPackages = popularPackages.filter(pkg => {

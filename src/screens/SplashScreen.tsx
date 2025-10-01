@@ -57,12 +57,12 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       ])
     ).start();
 
-    // Show skip button after 2 seconds
+    // Show skip button after 3 seconds
     const skipTimer = setTimeout(() => {
       setShowSkip(true);
     }, 2000);
 
-    // Auto finish after 6 seconds
+    // Auto finish after 8 seconds (in case video doesn't finish naturally)
     const autoFinishTimer = setTimeout(() => {
       onFinish();
     }, 3000);
@@ -90,23 +90,21 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Fallback video - Create a placeholder for now since we don't have an actual video file */}
+      {/* Background Video */}
       <View style={styles.videoContainer}>
-        {/* 
-          In a real implementation, you would use:
-          <Video
-            ref={video}
-            style={styles.video}
-            source={{ uri: 'path/to/your/splash-video.mp4' }}
-            resizeMode={ResizeMode.COVER}
-            shouldPlay
-            isLooping={false}
-            onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-          />
-        */}
+        <Video
+          ref={video}
+          style={styles.video}
+          source={require('../../assets/tablemountain.mp4')}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay
+          isLooping={false}
+          isMuted={true}
+          onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+        />
 
-        {/* Temporary animated placeholder */}
-        <View style={styles.placeholderContainer}>
+        {/* Overlay with app branding */}
+        <View style={styles.overlay}>
           <Animated.View
             style={[
               styles.logoContainer,
@@ -116,14 +114,6 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
               }
             ]}
           >
-            <Animated.Text
-              style={[
-                styles.logoText,
-                { transform: [{ scale: pulseAnim }] }
-              ]}
-            >
-              🌍
-            </Animated.Text>
             <Text style={styles.appName}>Tourer</Text>
             <Text style={styles.tagline}>Discover Amazing Destinations</Text>
           </Animated.View>
@@ -160,11 +150,11 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       )}
 
       {/* Skip button */}
-      {showSkip && (
+      {/* {showSkip && (
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
-      )}
+      )} */}
 
       {/* Bottom branding */}
       <View style={styles.bottomContainer}>
@@ -181,18 +171,20 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    position: 'relative',
   },
   video: {
     width,
     height,
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
-  placeholderContainer: {
+  overlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent overlay to ensure text readability
     width: '100%',
   },
   logoContainer: {

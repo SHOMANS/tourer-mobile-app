@@ -5,7 +5,7 @@ export const Colors = {
   primaryDark: '#0f0f2f',
 
   // Secondary colors
-  secondary: '#f5f5f5',
+  secondary: '#6c63ff',
   accent: '#ffd700',
 
   // Text colors
