@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, AppState } from 'react-native';
+import { View, Text, StyleSheet, AppState, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from './src/config/colors';
 
@@ -36,25 +36,24 @@ function LoadingScreen() {
 
 function AuthStack() {
   return (
-    <Stack.Navigator
-      initialRouteName="Login"
-      screenOptions={{
-        headerStyle: { backgroundColor: Colors.primary },
-        headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: 'bold' },
-      }}
-    >
-      <Stack.Screen
-        name="Login"
-        component={LoginScreen}
-        options={{ title: 'Sign In' }}
-      />
-      <Stack.Screen
-        name="Register"
-        component={RegisterScreen}
-        options={{ title: 'Create Account' }}
-      />
-    </Stack.Navigator>
+    <>
+      <StatusBar style="dark" backgroundColor="#ffffff" />
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+        />
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
+        />
+      </Stack.Navigator>
+    </>
   );
 }
 
@@ -63,7 +62,9 @@ function HomeStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.primary },
+        headerStyle: {
+          backgroundColor: Colors.primary,
+        },
         headerTintColor: '#fff',
         headerTitleStyle: { fontWeight: 'bold' },
       }}
@@ -213,36 +214,36 @@ function SettingsStack() {
 
 function TabNavigator() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+    <>
+      <StatusBar style="light" backgroundColor="#171947" />
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Tours') {
-            iconName = focused ? 'map' : 'map-outline';
-          } else if (route.name === 'Explore') {
-            iconName = focused ? 'search' : 'search-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }
+            if (route.name === 'Home') {
+              iconName = focused ? 'home' : 'home-outline';
+            } else if (route.name === 'Tours') {
+              iconName = focused ? 'map' : 'map-outline';
+            } else if (route.name === 'Explore') {
+              iconName = focused ? 'search' : 'search-outline';
+            } else if (route.name === 'Settings') {
+              iconName = focused ? 'settings' : 'settings-outline';
+            }
 
-          return <Ionicons name={iconName as any} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: 'gray',
-        headerShown: true,
-        headerStyle: { backgroundColor: Colors.primary },
-        headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: 'bold' },
-      })}
-    >
-      <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
-      <Tab.Screen name="Tours" component={ToursStack} options={{ headerShown: false }} />
-      <Tab.Screen name="Explore" component={ExploreStack} options={{ headerShown: false }} />
-      <Tab.Screen name="Settings" component={SettingsStack} options={{ headerShown: false }} />
-    </Tab.Navigator>
+            return <Ionicons name={iconName as any} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: Colors.primary,
+          tabBarInactiveTintColor: 'gray',
+          headerShown: false,
+        })}
+      >
+        <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
+        <Tab.Screen name="Tours" component={ToursStack} options={{ headerShown: false }} />
+        <Tab.Screen name="Explore" component={ExploreStack} options={{ headerShown: false }} />
+        <Tab.Screen name="Settings" component={SettingsStack} options={{ headerShown: false }} />
+      </Tab.Navigator>
+    </>
   );
 }
 
@@ -323,8 +324,8 @@ export default function App() {
   if (isLoading) {
     return (
       <SafeAreaProvider>
+        <StatusBar style="light" backgroundColor="#171947" />
         <LoadingScreen />
-        <StatusBar style="light" />
       </SafeAreaProvider>
     );
   }
@@ -333,7 +334,6 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         {user ? <MainStack /> : <AuthStack />}
-        <StatusBar style="light" />
       </NavigationContainer>
     </SafeAreaProvider>
   );

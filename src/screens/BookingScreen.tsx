@@ -320,7 +320,10 @@ export default function BookingScreen({ route, navigation }: any) {
           disabled={bookingsLoading}
         >
           {bookingsLoading ? (
-            <ActivityIndicator size="small" color="white" />
+            <View style={styles.buttonLoadingContainer}>
+              <ActivityIndicator size="small" color="white" style={styles.buttonSpinner} />
+              <Text style={styles.bookButtonText}>Processing...</Text>
+            </View>
           ) : (
             <Text style={styles.bookButtonText}>Confirm Booking</Text>
           )}
@@ -535,5 +538,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonSpinner: {
+    marginRight: 8,
   },
 });

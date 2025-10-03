@@ -9,6 +9,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import { Colors } from '../config/colors';
@@ -124,9 +125,14 @@ export default function RegisterScreen({ navigation }: any) {
             onPress={handleRegister}
             disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-            </Text>
+            {isLoading ? (
+              <View style={styles.buttonLoadingContainer}>
+                <ActivityIndicator size="small" color="white" style={styles.buttonSpinner} />
+                <Text style={styles.buttonText}>Creating Account...</Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Create Account</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.loginContainer}>
@@ -144,12 +150,17 @@ export default function RegisterScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#171947',
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f5f5f5',
+    marginTop: 20,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
   },
   formContainer: {
     backgroundColor: 'white',
@@ -212,6 +223,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonSpinner: {
+    marginRight: 8,
   },
   loginContainer: {
     flexDirection: 'row',

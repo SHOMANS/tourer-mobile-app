@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,13 @@ import {
   Alert,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useAppStore } from '../store/appStore';
 
 export default function SettingsScreen({ navigation }: any) {
   const { user, logout } = useAppStore();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -23,8 +25,15 @@ export default function SettingsScreen({ navigation }: any) {
           text: 'Logout',
           style: 'destructive',
           onPress: async () => {
-            await logout();
-            Alert.alert('Success', 'Logged out successfully');
+            setIsLoggingOut(true);
+            try {
+              await logout();
+              Alert.alert('Success', 'Logged out successfully');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            } finally {
+              setIsLoggingOut(false);
+            }
           },
         },
       ]
@@ -100,8 +109,19 @@ export default function SettingsScreen({ navigation }: any) {
 
           {/* Logout Section */}
           <View style={styles.section}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutText}>Logout</Text>
+            <TouchableOpacity
+              style={[styles.logoutButton, isLoggingOut && styles.logoutButtonDisabled]}
+              onPress={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <View style={styles.buttonLoadingContainer}>
+                  <ActivityIndicator size="small" color="white" style={styles.buttonSpinner} />
+                  <Text style={styles.logoutText}>Logging out...</Text>
+                </View>
+              ) : (
+                <Text style={styles.logoutText}>Logout</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -198,5 +218,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  logoutButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonSpinner: {
+    marginRight: 8,
   },
 });

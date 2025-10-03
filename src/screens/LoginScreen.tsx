@@ -9,6 +9,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 // TODO: Uncomment when Google OAuth is fully configured
 // import * as WebBrowser from 'expo-web-browser';
@@ -145,9 +146,14 @@ export default function LoginScreen({ navigation }: any) {
             onPress={handleLogin}
             disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Text>
+            {isLoading ? (
+              <View style={styles.buttonLoadingContainer}>
+                <ActivityIndicator size="small" color="white" style={styles.buttonSpinner} />
+                <Text style={styles.buttonText}>Signing in...</Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
           </TouchableOpacity>
 
           {/* TODO: Uncomment when Google OAuth is fully configured
@@ -183,12 +189,17 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#171947',
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f5f5f5',
+    marginTop: 20,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
   },
   formContainer: {
     backgroundColor: 'white',
@@ -244,6 +255,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonSpinner: {
+    marginRight: 8,
   },
   registerContainer: {
     flexDirection: 'row',
