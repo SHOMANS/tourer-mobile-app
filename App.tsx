@@ -76,7 +76,7 @@ function HomeStack() {
       <Stack.Screen
         name="TourDetail"
         component={TourDetailScreen}
-        options={{ title: 'Tour Details' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="BookingScreen"
