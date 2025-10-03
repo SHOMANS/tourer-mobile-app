@@ -45,15 +45,14 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
       await login(email, password);
-      Alert.alert('Success', 'Logged in successfully!');
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials');
+      // Error handling without alert - could show error in UI instead
+      console.error('Login failed:', error.message);
     }
   };
 
@@ -70,9 +69,8 @@ export default function LoginScreen({ navigation }: any) {
       const userInfo = JSON.parse(jsonPayload);
       
       await googleSignIn(idToken, userInfo);
-      Alert.alert('Success', 'Signed in with Google successfully!');
     } catch (error: any) {
-      Alert.alert('Google Sign-In Failed', error.message || 'Failed to sign in with Google');
+      console.error('Google Sign-In failed:', error.message);
     }
   };
   */
@@ -100,7 +98,6 @@ export default function LoginScreen({ navigation }: any) {
       }
     } catch (error) {
       console.error('Google Sign In Error:', error);
-      Alert.alert('Error', 'Failed to sign in with Google');
     }
   };
   */

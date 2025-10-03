@@ -39,8 +39,8 @@ export default function RegisterScreen({ navigation }: any) {
 
     try {
       await register(email, password, firstName, lastName);
-      Alert.alert('Success', 'Account created successfully!');
-      navigation.navigate('Login');
+      // User is automatically logged in after successful registration
+      // No need to navigate to Login since user will be moved to MainStack
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'Failed to create account');
     }

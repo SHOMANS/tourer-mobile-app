@@ -924,12 +924,21 @@ export const useAppStore = create<AppState>((set, get) => {
       console.log('fetchBookings called with page:', page, 'limit:', limit);
       set({ bookingsLoading: true, bookingsError: null });
       try {
-        const { accessToken } = get();
-        console.log('Access token available:', !!accessToken);
+        const { accessToken, user } = get();
+        console.log(
+          'Access token available:',
+          !!accessToken,
+          'User available:',
+          !!user
+        );
 
-        if (!accessToken) {
-          console.log('No access token, throwing error');
-          throw new Error('Authentication required');
+        if (!accessToken || !user) {
+          console.log('No access token or user, authentication required');
+          set({
+            bookingsError: 'Authentication required',
+            bookingsLoading: false,
+          });
+          return;
         }
 
         console.log(
@@ -968,11 +977,26 @@ export const useAppStore = create<AppState>((set, get) => {
           status: (error as any)?.response?.status,
           code: (error as any)?.code,
         });
-        set({
-          bookingsError:
-            error instanceof Error ? error.message : 'Failed to fetch bookings',
-          bookingsLoading: false,
-        });
+
+        // Check for authentication errors
+        const isAuthError =
+          (error as any)?.response?.status === 401 ||
+          (error instanceof Error && error.message.includes('Authentication'));
+
+        if (isAuthError) {
+          console.log('Authentication error detected, will logout user');
+          // Don't set error state for auth errors, let the logout handle it
+          set({ bookingsLoading: false });
+          // The axios interceptor should handle logout automatically
+        } else {
+          set({
+            bookingsError:
+              error instanceof Error
+                ? error.message
+                : 'Failed to fetch bookings',
+            bookingsLoading: false,
+          });
+        }
       }
     },
 

@@ -25,6 +25,7 @@ export default function BookingScreen({ route, navigation }: any) {
     bookingsLoading,
     bookingsError,
     accessToken,
+    logout,
   } = useAppStore();
 
   // Booking form state
@@ -83,7 +84,7 @@ export default function BookingScreen({ route, navigation }: any) {
         'Please log in to book this tour.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Login', onPress: () => navigation.navigate('Login') }
+          { text: 'Login', onPress: () => logout() }
         ]
       );
       return;

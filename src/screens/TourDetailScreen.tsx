@@ -40,6 +40,7 @@ export default function TourDetailScreen({ route, navigation }: any) {
     clearReviews,
     accessToken,
     user,
+    logout,
   } = useAppStore();
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -340,154 +341,189 @@ export default function TourDetailScreen({ route, navigation }: any) {
     navigation.navigate('BookingScreen', { packageId: selectedPackage.id });
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Main Image */}
-        <View style={styles.imageContainer}>
-          {selectedPackage.images && selectedPackage.images.length > 0 ? (
-            <Image
-              source={{ uri: selectedPackage.images[selectedImageIndex] }}
-              style={styles.mainImage}
-            />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>📷</Text>
-            </View>
-          )}
+  // Create data structure for the main FlatList
+  const getSections = () => {
+    const sections = [
+      { type: 'header', data: selectedPackage },
+      { type: 'thumbnails', data: selectedPackage.images },
+      { type: 'info', data: selectedPackage },
+      { type: 'description', data: selectedPackage },
+    ];
 
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-        </View>
+    if (selectedPackage.highlights && selectedPackage.highlights.length > 0) {
+      sections.push({ type: 'highlights', data: selectedPackage.highlights });
+    }
 
-        {/* Image Thumbnails */}
-        {selectedPackage.images && selectedPackage.images.length > 1 && (
+    if (selectedPackage.includes && selectedPackage.includes.length > 0) {
+      sections.push({ type: 'includes', data: selectedPackage.includes });
+    }
+
+    if (selectedPackage.excludes && selectedPackage.excludes.length > 0) {
+      sections.push({ type: 'excludes', data: selectedPackage.excludes });
+    }
+
+    sections.push({ type: 'location', data: selectedPackage });
+    sections.push({ type: 'reviews', data: { reviews, reviewsPagination, reviewsLoading, reviewsError } as any });
+
+    return sections;
+  };
+
+  const renderSection = ({ item }: any) => {
+    switch (item.type) {
+      case 'header':
+        return (
+          <View style={styles.imageContainer}>
+            {selectedPackage.images && selectedPackage.images.length > 0 ? (
+              <Image
+                source={{ uri: selectedPackage.images[selectedImageIndex] }}
+                style={styles.mainImage}
+              />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <Text style={styles.placeholderText}>📷</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'thumbnails':
+        if (!selectedPackage.images || selectedPackage.images.length <= 1) return null;
+        return (
           <FlatList
             horizontal
             data={selectedPackage.images}
             renderItem={renderImageItem}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item, index) => `thumb-${index}`}
             style={styles.thumbnailsList}
             contentContainerStyle={styles.thumbnailsContent}
             showsHorizontalScrollIndicator={false}
           />
-        )}
+        );
 
-        {/* Tour Info */}
-        <View style={styles.contentContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>{selectedPackage.title}</Text>
-              <Text style={styles.location}>
-                📍 {selectedPackage.locationName}
-                {selectedPackage.country && `, ${selectedPackage.country}`}
-              </Text>
-            </View>
-
-            <View style={styles.ratingContainer}>
-              <Text style={styles.rating}>
-                ⭐ {selectedPackage.rating?.toFixed(1) || 'N/A'}
-              </Text>
-              <Text style={styles.reviewCount}>
-                ({selectedPackage.reviewCount} reviews)
-              </Text>
-            </View>
-          </View>
-
-          {/* Price and Tags */}
-          <View style={styles.priceSection}>
-            <View style={styles.priceContainer}>
-              {selectedPackage.originalPrice && (
-                <Text style={styles.originalPrice}>
-                  ${selectedPackage.originalPrice}
+      case 'info':
+        return (
+          <View style={styles.contentContainer}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>{selectedPackage.title}</Text>
+                <Text style={styles.location}>
+                  📍 {selectedPackage.locationName}
+                  {selectedPackage.country && `, ${selectedPackage.country}`}
                 </Text>
-              )}
-              <Text style={styles.price}>${selectedPackage.price}</Text>
-              <Text style={styles.priceLabel}>per person</Text>
-            </View>
-
-            <View style={styles.tags}>
-              <Text style={styles.categoryTag}>{selectedPackage.category}</Text>
-              <Text style={styles.difficultyTag}>{selectedPackage.difficulty}</Text>
-            </View>
-          </View>
-
-          {/* Quick Info */}
-          <View style={styles.quickInfo}>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoIcon}>⏱️</Text>
-              <Text style={styles.infoLabel}>Duration</Text>
-              <Text style={styles.infoValue}>{selectedPackage.duration} days</Text>
-            </View>
-
-            <View style={styles.infoItem}>
-              <Text style={styles.infoIcon}>👥</Text>
-              <Text style={styles.infoLabel}>Max Guests</Text>
-              <Text style={styles.infoValue}>{selectedPackage.maxGuests}</Text>
-            </View>
-
-            {selectedPackage.minAge && (
-              <View style={styles.infoItem}>
-                <Text style={styles.infoIcon}>🎂</Text>
-                <Text style={styles.infoLabel}>Min Age</Text>
-                <Text style={styles.infoValue}>{selectedPackage.minAge}+</Text>
               </View>
-            )}
-          </View>
 
-          {/* Description */}
+              <View style={styles.ratingContainer}>
+                <Text style={styles.rating}>
+                  ⭐ {selectedPackage.rating?.toFixed(1) || 'N/A'}
+                </Text>
+                <Text style={styles.reviewCount}>
+                  ({selectedPackage.reviewCount} reviews)
+                </Text>
+              </View>
+            </View>
+
+            {/* Price and Tags */}
+            <View style={styles.priceSection}>
+              <View style={styles.priceContainer}>
+                {selectedPackage.originalPrice && (
+                  <Text style={styles.originalPrice}>
+                    ${selectedPackage.originalPrice}
+                  </Text>
+                )}
+                <Text style={styles.price}>${selectedPackage.price}</Text>
+                <Text style={styles.priceLabel}>per person</Text>
+              </View>
+
+              <View style={styles.tags}>
+                <Text style={styles.categoryTag}>{selectedPackage.category}</Text>
+                <Text style={styles.difficultyTag}>{selectedPackage.difficulty}</Text>
+              </View>
+            </View>
+
+            {/* Quick Info */}
+            <View style={styles.quickInfo}>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoIcon}>⏱️</Text>
+                <Text style={styles.infoLabel}>Duration</Text>
+                <Text style={styles.infoValue}>{selectedPackage.duration} days</Text>
+              </View>
+
+              <View style={styles.infoItem}>
+                <Text style={styles.infoIcon}>👥</Text>
+                <Text style={styles.infoLabel}>Max Guests</Text>
+                <Text style={styles.infoValue}>{selectedPackage.maxGuests}</Text>
+              </View>
+
+              {selectedPackage.minAge && (
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoIcon}>🎂</Text>
+                  <Text style={styles.infoLabel}>Min Age</Text>
+                  <Text style={styles.infoValue}>{selectedPackage.minAge}+</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        );
+
+      case 'description':
+        return (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>About This Tour</Text>
             <Text style={styles.description}>
               {selectedPackage.description || selectedPackage.shortDescription}
             </Text>
           </View>
+        );
 
-          {/* Highlights */}
-          {selectedPackage.highlights && selectedPackage.highlights.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Highlights</Text>
-              <FlatList
-                data={selectedPackage.highlights}
-                renderItem={renderHighlightItem}
-                keyExtractor={(item, index) => index.toString()}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
+      case 'highlights':
+        return (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Highlights</Text>
+            {item.data.map((highlight: string, index: number) => (
+              <View key={index} style={styles.highlightItem}>
+                <Text style={styles.highlightBullet}>•</Text>
+                <Text style={styles.highlightText}>{highlight}</Text>
+              </View>
+            ))}
+          </View>
+        );
 
-          {/* What's Included */}
-          {selectedPackage.includes && selectedPackage.includes.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>What's Included</Text>
-              <FlatList
-                data={selectedPackage.includes}
-                renderItem={renderIncludeItem}
-                keyExtractor={(item, index) => index.toString()}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
+      case 'includes':
+        return (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>What's Included</Text>
+            {item.data.map((include: string, index: number) => (
+              <View key={index} style={styles.includeItem}>
+                <Text style={styles.includeIcon}>✓</Text>
+                <Text style={styles.includeText}>{include}</Text>
+              </View>
+            ))}
+          </View>
+        );
 
-          {/* What's Not Included */}
-          {selectedPackage.excludes && selectedPackage.excludes.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>What's Not Included</Text>
-              <FlatList
-                data={selectedPackage.excludes}
-                renderItem={renderExcludeItem}
-                keyExtractor={(item, index) => index.toString()}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
+      case 'excludes':
+        return (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>What's Not Included</Text>
+            {item.data.map((exclude: string, index: number) => (
+              <View key={index} style={styles.excludeItem}>
+                <Text style={styles.excludeIcon}>✗</Text>
+                <Text style={styles.excludeText}>{exclude}</Text>
+              </View>
+            ))}
+          </View>
+        );
 
-          {/* Location */}
+      case 'location':
+        return (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Location</Text>
             <View style={styles.locationInfo}>
@@ -514,8 +550,10 @@ export default function TourDetailScreen({ route, navigation }: any) {
               <Text style={styles.mapButtonText}>📍 Open in Maps</Text>
             </TouchableOpacity>
           </View>
+        );
 
-          {/* Reviews */}
+      case 'reviews':
+        return (
           <View style={styles.section}>
             <View style={styles.reviewsHeader}>
               <Text style={styles.sectionTitle}>
@@ -533,13 +571,12 @@ export default function TourDetailScreen({ route, navigation }: any) {
                       'Please log in to write a review.',
                       [
                         { text: 'Cancel', style: 'cancel' },
-                        { text: 'Login', onPress: () => navigation.navigate('Login') }
+                        { text: 'Login', onPress: () => logout() }
                       ]
                     );
                     return;
                   }
 
-                  // Check if user has already reviewed this package
                   if (hasUserReviewed()) {
                     Alert.alert(
                       'Review Already Submitted',
@@ -558,44 +595,55 @@ export default function TourDetailScreen({ route, navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {reviewsLoading ? (
-              <ActivityIndicator size="small" color={Colors.primary} />
-            ) : reviewsError ? (
+            {reviewsError ? (
               <Text style={styles.errorText}>{reviewsError}</Text>
-            ) : reviews.length > 0 ? (
-              <FlatList
-                data={reviews}
-                renderItem={renderReviewItem}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                ItemSeparatorComponent={() => <View style={styles.reviewSeparator} />}
-              />
+            ) : item.data.reviews.length > 0 ? (
+              <View>
+                {item.data.reviews.map((review: any, index: number) => (
+                  <View key={review.id}>
+                    {renderReviewItem({ item: review })}
+                    {index < item.data.reviews.length - 1 && <View style={styles.reviewSeparator} />}
+                  </View>
+                ))}
+                {item.data.reviewsLoading && item.data.reviews.length > 0 && (
+                  <View style={styles.loadingMoreContainer}>
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                    <Text style={styles.loadingMoreText}>Loading more reviews...</Text>
+                  </View>
+                )}
+              </View>
+            ) : item.data.reviewsLoading ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
             ) : (
               <Text style={styles.noReviewsText}>No reviews yet. Be the first to review!</Text>
             )}
-
-            {reviews.length > 0 && reviewsPagination && reviewsPagination.page < reviewsPagination.pages && (
-              <TouchableOpacity
-                style={styles.viewAllReviewsButton}
-                onPress={() => {
-                  if (reviewsPagination) {
-                    fetchReviews(packageId, reviewsPagination.page + 1, 5);
-                  }
-                }}
-                disabled={reviewsLoading}
-              >
-                {reviewsLoading ? (
-                  <ActivityIndicator size="small" color={Colors.primary} />
-                ) : (
-                  <Text style={styles.viewAllReviewsText}>
-                    Load More Reviews ({reviews.length} of {selectedPackage.reviewCount})
-                  </Text>
-                )}
-              </TouchableOpacity>
-            )}
           </View>
-        </View>
-      </ScrollView>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const handleLoadMoreReviews = () => {
+    if (reviewsPagination &&
+      reviewsPagination.page < reviewsPagination.pages &&
+      !reviewsLoading) {
+      fetchReviews(packageId, reviewsPagination.page + 1, 5);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={getSections()}
+        renderItem={renderSection}
+        keyExtractor={(item, index) => `section-${item.type}-${index}`}
+        showsVerticalScrollIndicator={false}
+        onEndReached={handleLoadMoreReviews}
+        onEndReachedThreshold={0.1}
+        contentContainerStyle={styles.flatListContent}
+      />
 
       {/* Fixed Bottom Bar */}
       <View style={styles.bottomBar}>
@@ -917,6 +965,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 20,
@@ -1157,6 +1206,26 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 16,
     fontWeight: '600',
+  },
+  reviewsContainer: {
+    maxHeight: 400, // Limit height to make it scrollable
+  },
+  reviewsList: {
+    flexGrow: 0, // Prevent FlatList from expanding
+  },
+  loadingMoreContainer: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  loadingMoreText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#666',
+  },
+  flatListContent: {
+    paddingBottom: 100, // Add padding for the bottom bar
   },
   // Modal styles
   modalContainer: {

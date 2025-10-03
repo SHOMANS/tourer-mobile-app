@@ -31,21 +31,7 @@ export default function MainScreen({ navigation }: any) {
   }, [fetchHealthStatus, fetchPopularPackages]);
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            Alert.alert('Success', 'Logged out successfully');
-          },
-        },
-      ]
-    );
+    await logout();
   };
 
   const navigateToHealth = () => {
