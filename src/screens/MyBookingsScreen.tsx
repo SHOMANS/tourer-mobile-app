@@ -24,8 +24,16 @@ export default function MyBookingsScreen({ navigation }: any) {
   } = useAppStore();
 
   useEffect(() => {
+    console.log('MyBookingsScreen useEffect - accessToken:', !!accessToken);
+    console.log('MyBookingsScreen useEffect - bookingsLoading:', bookingsLoading);
+    console.log('MyBookingsScreen useEffect - bookingsError:', bookingsError);
+    console.log('MyBookingsScreen useEffect - bookings length:', bookings.length);
+
     if (accessToken) {
+      console.log('AccessToken exists, calling fetchBookings');
       fetchBookings();
+    } else {
+      console.log('No access token found');
     }
     return () => {
       clearBookings();
@@ -33,8 +41,22 @@ export default function MyBookingsScreen({ navigation }: any) {
   }, [accessToken]);
 
   const handleRefresh = () => {
+    console.log('handleRefresh called - accessToken:', !!accessToken);
     if (accessToken) {
       fetchBookings();
+    }
+  };
+
+  const testAPIConnection = async () => {
+    console.log('Testing API connection...');
+    try {
+      const response = await fetch('http://10.0.0.121:3006/health');
+      const data = await response.json();
+      console.log('API Health Response:', data);
+      alert(`API is ${data.status}. Version: ${data.version}`);
+    } catch (error) {
+      console.error('API Connection Test Failed:', error);
+      alert(`API Connection Failed: ${error}`);
     }
   };
 
@@ -102,7 +124,7 @@ export default function MyBookingsScreen({ navigation }: any) {
           </View>
 
           <Text style={styles.bookingPrice}>
-            ${item.totalPrice.toFixed(2)}
+            ${parseFloat(item.totalPrice || '0').toFixed(2)}
           </Text>
         </View>
       </View>
@@ -132,6 +154,12 @@ export default function MyBookingsScreen({ navigation }: any) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Loading your bookings...</Text>
+          <TouchableOpacity
+            style={[styles.retryButton, { marginTop: 20 }]}
+            onPress={testAPIConnection}
+          >
+            <Text style={styles.retryButtonText}>Test API Connection</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -156,7 +184,7 @@ export default function MyBookingsScreen({ navigation }: any) {
           <Text style={styles.emptyText}>You haven't made any bookings yet.</Text>
           <TouchableOpacity
             style={styles.exploreButton}
-            onPress={() => navigation.navigate('Tours')}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Tours' })}
           >
             <Text style={styles.exploreButtonText}>Explore Tours</Text>
           </TouchableOpacity>

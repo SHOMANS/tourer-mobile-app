@@ -17,6 +17,7 @@ import HealthScreen from './src/screens/HealthScreen';
 import ToursScreen from './src/screens/ToursScreen';
 import TourDetailScreen from './src/screens/TourDetailScreen';
 import BookingScreen from './src/screens/BookingScreen';
+import BookingDetailScreen from './src/screens/BookingDetailScreen';
 import MyBookingsScreen from './src/screens/MyBookingsScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -57,6 +58,159 @@ function AuthStack() {
   );
 }
 
+// Individual stack navigators for each tab
+function HomeStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
+      }}
+    >
+      <Stack.Screen
+        name="HomeMain"
+        component={HomeScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TourDetail"
+        component={TourDetailScreen}
+        options={{ title: 'Tour Details' }}
+      />
+      <Stack.Screen
+        name="BookingScreen"
+        component={BookingScreen}
+        options={{ title: 'Book Tour' }}
+      />
+      <Stack.Screen
+        name="MyBookings"
+        component={MyBookingsScreen}
+        options={{ title: 'My Bookings' }}
+      />
+      <Stack.Screen
+        name="BookingDetail"
+        component={BookingDetailScreen}
+        options={{ title: 'Booking Details' }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={HealthScreen}
+        options={{ title: 'Profile' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function ToursStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
+      }}
+    >
+      <Stack.Screen
+        name="ToursMain"
+        component={ToursScreen}
+        options={{ title: 'Discover Tours' }}
+      />
+      <Stack.Screen
+        name="TourDetail"
+        component={TourDetailScreen}
+        options={{ title: 'Tour Details' }}
+      />
+      <Stack.Screen
+        name="BookingScreen"
+        component={BookingScreen}
+        options={{ title: 'Book Tour' }}
+      />
+      <Stack.Screen
+        name="MyBookings"
+        component={MyBookingsScreen}
+        options={{ title: 'My Bookings' }}
+      />
+      <Stack.Screen
+        name="BookingDetail"
+        component={BookingDetailScreen}
+        options={{ title: 'Booking Details' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function ExploreStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
+      }}
+    >
+      <Stack.Screen
+        name="ExploreMain"
+        component={ExploreScreen}
+        options={{ title: 'Explore' }}
+      />
+      <Stack.Screen
+        name="TourDetail"
+        component={TourDetailScreen}
+        options={{ title: 'Tour Details' }}
+      />
+      <Stack.Screen
+        name="BookingScreen"
+        component={BookingScreen}
+        options={{ title: 'Book Tour' }}
+      />
+      <Stack.Screen
+        name="MyBookings"
+        component={MyBookingsScreen}
+        options={{ title: 'My Bookings' }}
+      />
+      <Stack.Screen
+        name="BookingDetail"
+        component={BookingDetailScreen}
+        options={{ title: 'Booking Details' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function SettingsStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
+      }}
+    >
+      <Stack.Screen
+        name="SettingsMain"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
+      />
+      <Stack.Screen
+        name="MyBookings"
+        component={MyBookingsScreen}
+        options={{ title: 'My Bookings' }}
+      />
+      <Stack.Screen
+        name="BookingDetail"
+        component={BookingDetailScreen}
+        options={{ title: 'Booking Details' }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={HealthScreen}
+        options={{ title: 'Profile' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 function TabNavigator() {
   return (
     <Tab.Navigator
@@ -84,10 +238,10 @@ function TabNavigator() {
         headerTitleStyle: { fontWeight: 'bold' },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-      <Tab.Screen name="Tours" component={ToursScreen} options={{ title: 'Discover Tours' }} />
-      <Tab.Screen name="Explore" component={ExploreScreen} options={{ title: 'Explore' }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
+      <Tab.Screen name="Tours" component={ToursStack} options={{ headerShown: false }} />
+      <Tab.Screen name="Explore" component={ExploreStack} options={{ headerShown: false }} />
+      <Tab.Screen name="Settings" component={SettingsStack} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }
@@ -106,26 +260,6 @@ function MainStack() {
         name="MainTabs"
         component={TabNavigator}
         options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="TourDetail"
-        component={TourDetailScreen}
-        options={{ title: 'Tour Details' }}
-      />
-      <Stack.Screen
-        name="BookingScreen"
-        component={BookingScreen}
-        options={{ title: 'Book Tour' }}
-      />
-      <Stack.Screen
-        name="MyBookings"
-        component={MyBookingsScreen}
-        options={{ title: 'My Bookings' }}
-      />
-      <Stack.Screen
-        name="Profile"
-        component={HealthScreen}
-        options={{ title: 'Profile' }}
       />
     </Stack.Navigator>
   );

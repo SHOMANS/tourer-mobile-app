@@ -96,7 +96,7 @@ interface Booking {
   startDate: string;
   endDate?: string;
   guests: number;
-  totalPrice: number;
+  totalPrice: string; // Prisma Decimal fields are returned as strings
   currency: string;
   guestNames: string[];
   contactInfo?: any;
@@ -285,15 +285,21 @@ interface AppState {
 // Smart API URL selection based on platform
 const getApiBaseUrl = () => {
   if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    console.log(
+      'Using env API_BASE_URL:',
+      process.env.EXPO_PUBLIC_API_BASE_URL
+    );
     return process.env.EXPO_PUBLIC_API_BASE_URL;
   }
 
   // Fallback logic for development
   // Note: This requires Platform import from react-native
-  return 'http://10.0.0.169:3000'; // Your machine's IP
+  console.log('Using fallback API_BASE_URL: http://10.0.0.121:3006');
+  return 'http://10.0.0.121:3006'; // Your machine's IP with correct port
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('Final API_BASE_URL:', API_BASE_URL);
 
 const TOKEN_KEYS = {
   ACCESS_TOKEN: 'access_token',
@@ -328,7 +334,12 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Prevent infinite loops and avoid retrying certain endpoints
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes('/auth/refresh')
+    ) {
       originalRequest._retry = true;
 
       if (storeRef) {
@@ -337,11 +348,13 @@ axios.interceptors.response.use(
 
         if (refreshToken) {
           try {
+            console.log('Attempting to refresh token due to 401 error');
             // Try to refresh the token
             await refreshAccessToken();
             // Retry the original request with new token
             const { accessToken } = storeRef.getState();
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            console.log('Token refreshed, retrying original request');
             return axios(originalRequest);
           } catch (refreshError) {
             // Refresh failed, logout user
@@ -908,20 +921,32 @@ export const useAppStore = create<AppState>((set, get) => {
 
     // Booking methods
     fetchBookings: async (page = 1, limit = 10) => {
+      console.log('fetchBookings called with page:', page, 'limit:', limit);
       set({ bookingsLoading: true, bookingsError: null });
       try {
         const { accessToken } = get();
+        console.log('Access token available:', !!accessToken);
+
         if (!accessToken) {
+          console.log('No access token, throwing error');
           throw new Error('Authentication required');
         }
 
+        console.log(
+          'Making API call to:',
+          `${API_BASE_URL}/bookings/user-bookings?page=${page}&limit=${limit}`
+        );
+
+        // Add timeout to prevent hanging
         const response = await axios.get(
-          `${API_BASE_URL}/bookings/my-bookings?page=${page}&limit=${limit}`,
+          `${API_BASE_URL}/bookings/user-bookings?page=${page}&limit=${limit}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
+            timeout: 10000, // 10 second timeout
           }
         );
 
+        console.log('API response received:', response.status);
         const bookingsResponse: BookingsResponse = response.data;
         set({
           bookings:
@@ -931,7 +956,18 @@ export const useAppStore = create<AppState>((set, get) => {
           bookingsPagination: bookingsResponse.pagination,
           bookingsLoading: false,
         });
+        console.log(
+          'Bookings set successfully, count:',
+          bookingsResponse.data.length
+        );
       } catch (error) {
+        console.error('fetchBookings error:', error);
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          response: (error as any)?.response?.data,
+          status: (error as any)?.response?.status,
+          code: (error as any)?.code,
+        });
         set({
           bookingsError:
             error instanceof Error ? error.message : 'Failed to fetch bookings',
