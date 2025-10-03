@@ -88,3 +88,9 @@ See `.env.example` for required environment variables.
 ```bash
 pnpm start --clear
 ```
+
+## Deployment
+
+```bash
+npx eas update --branch main --message "Fixed status bar and header overlay issues for Android devices"
+```
