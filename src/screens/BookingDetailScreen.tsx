@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Text } from 'react-native';
-import { useAppStore } from '../store/appStore';
+import { useBookingsStore } from '../store/slices/bookingsStore';
 import { Booking } from '../types';
 import {
   ScreenContainer,
@@ -14,9 +14,12 @@ import {
 
 export default function BookingDetailScreen({ route, navigation }: any) {
   const { bookingId } = route.params;
-  const [bookingDetail, setBookingDetail] = useState<Booking | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    selectedBooking,
+    bookingsLoading,
+    bookingsError,
+    fetchBookingById
+  } = useBookingsStore();
 
   useEffect(() => {
     fetchBookingDetail();
@@ -24,21 +27,10 @@ export default function BookingDetailScreen({ route, navigation }: any) {
 
   const fetchBookingDetail = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const { bookings } = useAppStore.getState();
-      const booking = bookings.find(b => b.id === bookingId);
-
-      if (booking) {
-        setBookingDetail(booking as Booking);
-      } else {
-        setError('Booking not found');
-      }
+      await fetchBookingById(bookingId);
     } catch (err) {
-      setError('Failed to load booking details');
-    } finally {
-      setLoading(false);
+      // Error is handled by the store
+      console.error('Failed to fetch booking:', err);
     }
   };
 
@@ -51,7 +43,7 @@ export default function BookingDetailScreen({ route, navigation }: any) {
     });
   };
 
-  if (loading) {
+  if (bookingsLoading) {
     return (
       <ScreenContainer>
         <LoadingState message="Loading booking details..." />
@@ -59,18 +51,18 @@ export default function BookingDetailScreen({ route, navigation }: any) {
     );
   }
 
-  if (error) {
+  if (bookingsError) {
     return (
       <ScreenContainer>
         <ErrorState
-          message={error}
+          message={bookingsError}
           onRetry={fetchBookingDetail}
         />
       </ScreenContainer>
     );
   }
 
-  if (!bookingDetail) {
+  if (!selectedBooking) {
     return (
       <ScreenContainer>
         <ErrorState
@@ -91,14 +83,14 @@ export default function BookingDetailScreen({ route, navigation }: any) {
             Booking Details
           </Text>
           <Text style={{ fontSize: 14, color: '#666', fontFamily: 'monospace' }}>
-            ID: {bookingDetail.id}
+            ID: {selectedBooking.id}
           </Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
             <Text style={{ fontSize: 16, fontWeight: '600', marginRight: 10 }}>
               Status:
             </Text>
-            <StatusBadge status={bookingDetail.status} />
+            <StatusBadge status={selectedBooking.status} />
           </View>
         </Card>
 
@@ -109,15 +101,15 @@ export default function BookingDetailScreen({ route, navigation }: any) {
           </Text>
           <InfoRow
             label="Package"
-            value={bookingDetail.package?.title || 'N/A'}
+            value={selectedBooking.package?.title || 'N/A'}
           />
           <InfoRow
             label="Duration"
-            value={`${bookingDetail.package?.duration || 'N/A'} days`}
+            value={`${selectedBooking.package?.duration || 'N/A'} days`}
           />
           <InfoRow
             label="Location"
-            value={bookingDetail.package?.locationName || 'N/A'}
+            value={selectedBooking.package?.locationName || 'N/A'}
           />
         </Card>
 
@@ -128,26 +120,26 @@ export default function BookingDetailScreen({ route, navigation }: any) {
           </Text>
           <InfoRow
             label="Start Date"
-            value={formatDate(bookingDetail.startDate)}
+            value={formatDate(selectedBooking.startDate)}
           />
-          {bookingDetail.endDate && (
+          {selectedBooking.endDate && (
             <InfoRow
               label="End Date"
-              value={formatDate(bookingDetail.endDate)}
+              value={formatDate(selectedBooking.endDate)}
             />
           )}
           <InfoRow
             label="Guests"
-            value={bookingDetail.guests.toString()}
+            value={selectedBooking.guests.toString()}
           />
           <InfoRow
             label="Total Price"
-            value={`${bookingDetail.currency} ${parseFloat(bookingDetail.totalPrice || '0').toFixed(2)}`}
+            value={`${selectedBooking.currency} ${parseFloat(selectedBooking.totalPrice || '0').toFixed(2)}`}
             valueStyle={{ fontWeight: '600', fontSize: 16 }}
           />
           <InfoRow
             label="Payment Status"
-            value={bookingDetail.paymentStatus || 'N/A'}
+            value={selectedBooking.paymentStatus || 'N/A'}
           />
         </Card>
 
@@ -158,21 +150,21 @@ export default function BookingDetailScreen({ route, navigation }: any) {
           </Text>
           <InfoRow
             label="Email"
-            value={bookingDetail.user?.email || bookingDetail.contactEmail || 'N/A'}
+            value={selectedBooking.user?.email || selectedBooking.contactEmail || 'N/A'}
           />
           <InfoRow
             label="Name"
-            value={bookingDetail.user ? `${bookingDetail.user.firstName} ${bookingDetail.user.lastName}` : 'N/A'}
+            value={selectedBooking.user ? `${selectedBooking.user.firstName} ${selectedBooking.user.lastName}` : 'N/A'}
           />
         </Card>
 
         {/* Guest Names */}
-        {bookingDetail.guestNames && bookingDetail.guestNames.length > 0 && (
+        {selectedBooking.guestNames && selectedBooking.guestNames.length > 0 && (
           <Card style={{ marginBottom: 16 }}>
             <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>
               Guest Names
             </Text>
-            {bookingDetail.guestNames.map((name: string, index: number) => (
+            {selectedBooking.guestNames.map((name: string, index: number) => (
               <InfoRow
                 key={index}
                 label={`Guest ${index + 1}`}
@@ -183,25 +175,25 @@ export default function BookingDetailScreen({ route, navigation }: any) {
         )}
 
         {/* Special Requests */}
-        {bookingDetail.specialRequests && (
+        {selectedBooking.specialRequests && (
           <Card style={{ marginBottom: 16 }}>
             <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>
               Special Requests
             </Text>
             <Text style={{ fontSize: 14, lineHeight: 20 }}>
-              {bookingDetail.specialRequests}
+              {selectedBooking.specialRequests}
             </Text>
           </Card>
         )}
 
         {/* Notes */}
-        {bookingDetail.notes && (
+        {selectedBooking.notes && (
           <Card style={{ marginBottom: 16 }}>
             <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>
               Notes
             </Text>
             <Text style={{ fontSize: 14, lineHeight: 20 }}>
-              {bookingDetail.notes}
+              {selectedBooking.notes}
             </Text>
           </Card>
         )}
@@ -213,11 +205,11 @@ export default function BookingDetailScreen({ route, navigation }: any) {
           </Text>
           <InfoRow
             label="Booked on"
-            value={formatDate(bookingDetail.createdAt)}
+            value={formatDate(selectedBooking.createdAt)}
           />
           <InfoRow
             label="Last updated"
-            value={formatDate(bookingDetail.updatedAt)}
+            value={formatDate(selectedBooking.updatedAt)}
           />
         </Card>
 
